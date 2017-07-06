@@ -9,15 +9,17 @@ MongoClient.connect('mongodb://localhost:27017/TodoApp', (err, db) => {
 		return console.log('Can not connect to Mongodb server');
 	}
 	console.log('Connected to Mongodb server');
-	// db.collection('Todos').insertOne({
-	// 	text: 'Something todo',
-	// 	completed: false
-	// }, (err, result) => {
-	// 	if (err) {
-	// 		return console.log('Unable to insert todo', err);
-	// 	}
-	// 	console.log(JSON.stringify(result.ops, undefined, 2));
-	// });
+	// for (var i = 0; i < 10; i++) {
+	// 	db.collection('Todos').insertOne({
+	// 		text: `Task ${i+1}`,
+	// 		completed: false
+	// 	}, (err, result) => {
+	// 		if (err) {
+	// 			return console.log('Unable to insert todo', err);
+	// 		}
+	// 		console.log(JSON.stringify(result.ops, undefined, 2));
+	// 	});
+	// }
 	// db.collection('Users').insertOne({
 	// 	name: 'Marshanda',
 	// 	age: 26,
