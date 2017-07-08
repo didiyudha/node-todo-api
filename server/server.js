@@ -68,11 +68,26 @@ app.post('/users', (req, res) => {
         
 });
 
+// GET /users
+// Get all users
+app.get('/users', (req, res) => {
+    User
+        .find()
+        .then((users) => {
+            res
+                .send({users});
+        }, (err) => {
+            res
+                .send(err);
+        });
+});
 
 // Fire up the server on port 3000
-app.listen(3000, () => {
-    console.log('Server started on port 3000');
-});
+if (!module.parent) {
+    app.listen(3000, () => {
+        console.log('Server started on port 3000');
+    });
+}
 
 // Exporting app variable for testing needs
 module.exports = { app };
