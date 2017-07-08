@@ -32,6 +32,22 @@ app.post('/todos', (req, res) => {
         });
 });
 
+// GET /todos
+// Return all todos
+app.get('/todos', (req, res) => {
+    Todo
+        .find()
+        .then((todos) => {
+            // We wrap todos in an object
+            // in order to we can add another properties we need later on
+            res
+                .send({todos});
+        }, (err) => {
+            res
+                .send(err);
+        });
+});
+
 // POST /users
 // Save a user
 app.post('/users', (req, res) => {
@@ -57,3 +73,6 @@ app.post('/users', (req, res) => {
 app.listen(3000, () => {
     console.log('Server started on port 3000');
 });
+
+// Exporting app variable for testing needs
+module.exports = { app };
