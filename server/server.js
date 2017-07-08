@@ -1,60 +1,59 @@
-var mongoose = require('mongoose');
+var express = require('express');
+var bodyParser = require('body-parser');
 
-mongoose.Promise = global.Promise;
-mongoose.connect('mongodb://localhost:27017/TodoApp', {
-    useMongoClient: true
-});
+var { mongoose } = require('./db/mongoose');
+var { Todo } = require('./models/todo');
+var { User } = require('./models/user');
 
-var Todo = mongoose.model('Todo', {
-    text: {
-        type: String,
-        required: true,
-        minlength: 1,
-        trim: true
-    },
-    completed: {
-        type: Boolean,
-        default: false
-    },
-    completedAt: {
-        type: Number,
-        default: null
-    }
-});
+var app = express();
 
-var User = mongoose.model('User', {
-    email: {
-        type: String,
-        required: true,
-        trim: true,
-        minlength: 1
-    }
-});
+// Adding JSON parser to express middleware
+// in order to every request body converted to JSON object
+app.use(bodyParser.json());
 
-// var newTodo = new Todo({
-//     text: 'Refactoring Code',
-//     completed: false,
-//     completedAt: 123
-// });
+// Routes
 
-// newTodo
-//     .save()
-//     .then((res) => {
-//         console.log('Save new todo');
-//         console.log(JSON.stringify(res, undefined, 2));
-//     }, (err) => {
-//         console.log('Unable to save todo. ', err);
-//     });
-
-var newUser = new User({
-    email: 'yudhadidi@yahoo.com'
-});
-
-newUser
-    .save()
-    .then((userDoc) => {
-        console.log('User successfully saved');
-        console.log(JSON.stringify(userDoc, undefined, 2));
-    }, (err) => {
-        console.log('Unable to save user. ', err);
+// POST /todos
+// Save a todo
+app.post('/todos', (req, res) => {
+    var todo = new Todo({
+        text: req.body.text
     });
+    todo
+        .save()
+        .then((todoDoc) => {
+            res
+                .status(201)
+                .send(todoDoc);
+        }, (err) => {
+            res
+                .status(400)
+                .send(err);
+        });
+});
+
+// POST /users
+// Save a user
+app.post('/users', (req, res) => {
+    var newUser = new User({
+        email: req.body.email
+    });
+    newUser
+        .save()
+        .then((usrDoc) => {
+            res
+                .status(201)
+                .send(usrDoc);
+        }, (err) => {
+            res
+                .status(400)
+                .send(err);
+        });
+        
+});
+
+
+// Fire up the server on port 3000
+app.listen(3000, () => {
+    console.log('Server started on port 3000');
+});
