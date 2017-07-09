@@ -98,13 +98,54 @@ app.post('/users', (req, res) => {
         .then((usrDoc) => {
             res
                 .status(201)
-                .send(usrDoc);
+                .send({usrDoc});
         }, (err) => {
             res
                 .status(400)
                 .send(err);
         });
         
+});
+
+// DELETE /users/:id
+// Delete a user
+app.delete('/todos/:id', (req, res) => {
+    var todoId = req.params.id;
+    // Check whether the ID is valid or not
+    // Send empty body and set the status code 404
+    if (!ObjectID.isValid(todoId)) {
+        console.log('Invalid object ID.');
+        res
+            .status(404)
+            .send();
+        return;
+    }
+    // Do remove query
+    // If success, return the remove object
+    // If there's no data return empty body and status code 404
+    // If error occured, return empty body and status code 400
+    Todo
+        .findByIdAndRemove(todoId)
+        .then((rmvTodo) => {
+            if (rmvTodo == null) {
+                console.log(`Theres no todo data with the ID ${todoId}`);
+                res
+                    .status(404)
+                    .send();
+                return;
+            }
+            console.log(`Todo with ID ${todoId} successfully deleted`);
+            res
+                .status(200)
+                .send({todo: rmvTodo});
+            return;
+        })
+        .catch((e) => {
+            console.log(`Error occured when deleted Todo with ID ${todoId}`);
+            res
+                .status(400)
+                .send();
+        });
 });
 
 // GET /users
