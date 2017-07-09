@@ -1,6 +1,7 @@
-var express = require('express');
-var bodyParser = require('body-parser');
-var { ObjectID } = require('mongodb');
+const _ = require('lodash');
+const express = require('express');
+const bodyParser = require('body-parser');
+const { ObjectID } = require('mongodb');
 
 var { mongoose } = require('./db/mongoose');
 var { Todo } = require('./models/todo');
@@ -145,6 +146,61 @@ app.delete('/todos/:id', (req, res) => {
             res
                 .status(400)
                 .send();
+        });
+});
+
+app.patch('/todos/:id', (req, res) => {
+    var id = req.params.id;
+    // Get text and completed properties in request body
+    var body = _.pick(req.body, ['text', 'completed']);
+
+    // Check whether the ID is valid or not
+    // Send empty body and set the status code 404
+    if (!ObjectID.isValid(id)) {
+        console.log('Invalid object ID.');
+        res
+            .status(404)
+            .send();
+        return;
+    }
+
+    // If there's compeleted in request body 
+    // and the value is equal to true 
+    // then set the completedAt time
+    // else we set completed to false and completedAt to false
+    if (_.isBoolean(body.completed) && body.completed) {
+        body.completedAt = new Date().getTime();
+    } else {
+        body.completedAt = null;
+        body.completed = false;
+    }
+    
+    // Update todo data
+    // If succes will be returned updated data
+    // else return empty data
+    Todo
+        .findByIdAndUpdate(id, {
+            $set: body
+        }, {
+            new: true
+        })
+        .then((todo) => {
+            if (!todo) {
+                res
+                    .status(404)
+                    .send();
+                return;
+            }
+            res
+                .status(200)
+                .send({todo});
+            return;
+        })
+        .catch((err) => {
+            res
+                .status(400)
+                .send();
+            return;
         });
 });
 
