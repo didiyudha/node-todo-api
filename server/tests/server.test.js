@@ -130,13 +130,27 @@ describe('GET /todos/:id', () => {
 // Testing DELETE /todos/:id
 describe('DELETE /todos/:id', () => {
     it('should return deleted todo', (done) => {
+        var hexId = todos[0]._id.toHexString();
         request(app)
-            .delete(`/todos/${todos[0]._id.toHexString()}`)
+            .delete(`/todos/${hexId}`)
             .expect(200)
             .expect((res) => {
                 expect(res.body.todo.text).toBe(todos[0].text);
             })
-            .end(done);
+            .end((err, res) => {
+                if (err) {
+                    return done(err);
+                }
+                // Check todo that just has been removed in database
+                Todo
+                    .findOne({_id: hexId})
+                    .then((todo) => {
+                        expect(todo).toNotExist();
+                        done();
+                    }).catch((e) => {
+                        done(e);
+                    });
+            });
     });
     it('should return 404 if todo not found', (done) => {
         var hexId = new ObjectID().toHexString();
