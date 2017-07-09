@@ -52,6 +52,7 @@ User
             return console.log('User not found');
         }
         console.log(JSON.stringify(user, undefined, 2));
-    }).catch((e) => {
+    })
+    .catch((e) => {
         console.log(e);
     });
