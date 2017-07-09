@@ -7,6 +7,7 @@ var { Todo } = require('./models/todo');
 var { User } = require('./models/user');
 
 var app = express();
+const port = process.env.PORT || 3000;
 
 // Adding JSON parser to express middleware
 // in order to every request body converted to JSON object
@@ -122,8 +123,8 @@ app.get('/users', (req, res) => {
 
 // Fire up the server on port 3000
 if (!module.parent) {
-    app.listen(3000, () => {
-        console.log('Server started on port 3000');
+    app.listen(port, () => {
+        console.log(`Server started on port ${port}`);
     });
 }
 
