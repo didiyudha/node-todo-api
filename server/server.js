@@ -90,28 +90,8 @@ app.get('/todos/:id', (req, res) => {
         });
 });
 
-// POST /users
-// Save a user
-app.post('/users', (req, res) => {
-    var newUser = new User({
-        email: req.body.email
-    });
-    newUser
-        .save()
-        .then((usrDoc) => {
-            res
-                .status(201)
-                .send({usrDoc});
-        }, (err) => {
-            res
-                .status(400)
-                .send(err);
-        });
-        
-});
-
 // DELETE /users/:id
-// Delete a user
+// Delete a todo
 app.delete('/todos/:id', (req, res) => {
     var todoId = req.params.id;
     // Check whether the ID is valid or not
@@ -151,6 +131,8 @@ app.delete('/todos/:id', (req, res) => {
         });
 });
 
+// PATCH /todos/:id
+// Update a todo
 app.patch('/todos/:id', (req, res) => {
     var id = req.params.id;
     // Get text and completed properties in request body
@@ -206,18 +188,25 @@ app.patch('/todos/:id', (req, res) => {
         });
 });
 
-// GET /users
-// Get all users
-app.get('/users', (req, res) => {
-    User
-        .find()
-        .then((users) => {
-            res
-                .send({users});
-        }, (err) => {
-            res
-                .send(err);
-        });
+// POST /users
+// Create a user
+app.post('/users', (req, res) => {
+  var body = _.pick(req.body, ['email', 'password']);
+  var user = new User(body);
+
+  user
+    .save()
+    .then(() => {
+        return user.generateAuthToken();
+    })
+    .then((token) => {
+        res
+            .header('x-auth', token)
+            .send(user);
+    })
+    .catch((e) => {
+        res.status(400).send(e);
+    });
 });
 
 // Fire up the server on port 3000
