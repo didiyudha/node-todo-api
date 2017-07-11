@@ -2,6 +2,7 @@ require('./config/config');
 
 const _ = require('lodash');
 const express = require('express');
+const bcrypt = require('bcryptjs');
 const bodyParser = require('body-parser');
 const { ObjectID } = require('mongodb');
 
@@ -221,6 +222,26 @@ app.get('/users/me', authenticate, (req, res) => {
     var user = req.user;
     res
         .send({user});
+});
+
+// POST /users/login
+app.post('/users/login', (req, res) => {
+    var usr = _.pick(req.body, ['email', 'password']);
+    User
+        .findByCredentials(usr.email, usr.password)
+        .then((user) => {
+            user
+                .generateAuthToken()
+                .then((token) => {
+                    res
+                        .set('x-auth', token)
+                        .send(user);
+                });
+        }).catch((err) => {
+            res
+                .status(400)
+                .send(err);
+        });
 });
 
 // Fire up the server on port 3000

@@ -265,3 +265,30 @@ describe('POST /users', () => {
             .end(done);
     });
 });
+
+// Testing POST /users/login
+describe('POST /users/login', () => {
+    it('should success login', (done) => {
+        var email = users[0].email;
+        var password = users[0].password;
+        request(app)
+            .post('/users/login')
+            .send({email, password})
+            .expect(200)
+            .expect((res) => {
+                expect(res.headers['x-auth']).toExist();
+                expect(res.body.email).toBe(email);
+                expect(res.body._id).toExist();
+            })
+            .end(done);
+    });
+    it('should fail to login', (done) => {
+        var email = 'xxx@example.com';
+        var password = '123456';
+        request(app)
+            .post('/users/login')
+            .send({email, password})
+            .expect(400)
+            .end(done);
+    });
+});
