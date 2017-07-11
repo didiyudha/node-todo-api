@@ -235,7 +235,7 @@ app.post('/users/login', (req, res) => {
                 .then((token) => {
                     res
                         .set('x-auth', token)
-                        .send(user);
+                        .send();
                 });
         }).catch((err) => {
             res

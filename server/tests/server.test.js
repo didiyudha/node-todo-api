@@ -236,7 +236,9 @@ describe('POST /users', () => {
                         expect(user).toExist();
                         expect(user.password).toNotBe(newUser.password);
                         done();
-                    })
+                    }).catch((e) => {
+                        done(e);
+                    });
             });
             
     });
@@ -269,26 +271,52 @@ describe('POST /users', () => {
 // Testing POST /users/login
 describe('POST /users/login', () => {
     it('should success login', (done) => {
-        var email = users[0].email;
-        var password = users[0].password;
+        var email = users[1].email;
+        var password = users[1].password;
         request(app)
             .post('/users/login')
             .send({email, password})
             .expect(200)
             .expect((res) => {
                 expect(res.headers['x-auth']).toExist();
-                expect(res.body.email).toBe(email);
-                expect(res.body._id).toExist();
             })
-            .end(done);
+            .end((err, res) => {
+                if (err) {
+                    return done(err);
+                }
+                User.findById(users[1]._id).then((user) => {
+                    expect(user.tokens[0]).toInclude({
+                        access: 'auth',
+                        token: res.headers['x-auth']
+                    });
+                    done();
+                })
+                .catch((e) => done(e));
+            });
     });
     it('should fail to login', (done) => {
-        var email = 'xxx@example.com';
-        var password = '123456';
+        var email = users[1].email;
+        var password = '654321';
         request(app)
             .post('/users/login')
             .send({email, password})
             .expect(400)
-            .end(done);
+            .expect((res) => {
+                expect(res.headers['x-auth']).toNotExist();
+            })
+            .end((err, res) => {
+                if (err) {
+                    return done(err);
+                }
+                User
+                    .findById(users[1]._id)
+                    .then((user) => {
+                        expect(user.tokens.length).toBe(0);
+                        done();
+                    })
+                    .catch((e) => {
+                        done(e);
+                    })
+            });
     });
 });
