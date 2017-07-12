@@ -22,9 +22,10 @@ app.use(bodyParser.json());
 
 // POST /todos
 // Save a todo
-app.post('/todos', (req, res) => {
+app.post('/todos', authenticate, (req, res) => {
     var todo = new Todo({
-        text: req.body.text
+        text: req.body.text,
+        _creator: req.user._id
     });
     todo
         .save()
@@ -41,9 +42,11 @@ app.post('/todos', (req, res) => {
 
 // GET /todos
 // Return all todos
-app.get('/todos', (req, res) => {
+app.get('/todos', authenticate, (req, res) => {
     Todo
-        .find()
+        .find({
+            _creator: req.user._id
+        })
         .then((todos) => {
             // We wrap todos in an object
             // in order to we can add another properties we need later on
@@ -57,7 +60,7 @@ app.get('/todos', (req, res) => {
 
 // GET /todos/:id
 // Return a todo object
-app.get('/todos/:id', (req, res) => {
+app.get('/todos/:id', authenticate, (req, res) => {
     var id = req.params.id;
     console.log('Todo ID: ', id);
     if (!ObjectID.isValid(id)) {
@@ -68,7 +71,10 @@ app.get('/todos/:id', (req, res) => {
         return;
     }
     Todo
-        .findById(id)
+        .findOne({
+            _id: id,
+            _creator: req.user._id
+        })
         .then((todo) => {
             // If todo with id params not found in database
             // Server will send empty body with status code 404
@@ -94,8 +100,10 @@ app.get('/todos/:id', (req, res) => {
 
 // DELETE /users/:id
 // Delete a todo
-app.delete('/todos/:id', (req, res) => {
+app.delete('/todos/:id', authenticate, (req, res) => {
     var todoId = req.params.id;
+    var user = req.user;
+
     // Check whether the ID is valid or not
     // Send empty body and set the status code 404
     if (!ObjectID.isValid(todoId)) {
@@ -111,7 +119,10 @@ app.delete('/todos/:id', (req, res) => {
     // If there's no data return empty body and status code 404
     // If error occured, return empty body and status code 400
     Todo
-        .findByIdAndRemove(todoId)
+        .findOneAndRemove({
+            _id: todoId,
+            _creator: user._id
+        })
         .then((rmvTodo) => {
             if (rmvTodo == null) {
                 console.log(`Theres no todo data with the ID ${todoId}`);
@@ -136,8 +147,10 @@ app.delete('/todos/:id', (req, res) => {
 
 // PATCH /todos/:id
 // Update a todo
-app.patch('/todos/:id', (req, res) => {
+app.patch('/todos/:id', authenticate, (req, res) => {
     var id = req.params.id;
+    var user = req.user;
+
     // Get text and completed properties in request body
     var body = _.pick(req.body, ['text', 'completed']);
 
@@ -166,7 +179,10 @@ app.patch('/todos/:id', (req, res) => {
     // If succes will be returned updated data
     // else return empty data
     Todo
-        .findByIdAndUpdate(id, {
+        .findOneAndUpdate({
+            _id: id,
+            _creator: user._id
+        }, {
             $set: body
         }, {
             new: true
