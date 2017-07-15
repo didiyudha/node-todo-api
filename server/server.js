@@ -22,85 +22,67 @@ app.use(bodyParser.json());
 
 // POST /todos
 // Save a todo
-app.post('/todos', authenticate, (req, res) => {
+app.post('/todos', authenticate, async (req, res) => {
     var todo = new Todo({
         text: req.body.text,
         _creator: req.user._id
     });
-    todo
-        .save()
-        .then((todoDoc) => {
-            res
-                .status(201)
-                .send(todoDoc);
-        }, (err) => {
-            res
-                .status(400)
-                .send(err);
-        });
+    try {
+        let todoDoc = await todo.save();
+        res.status(201).send(todoDoc);
+        return;
+    } catch(e) {
+        res.status(400).send(e);
+        return;
+    }
 });
 
 // GET /todos
 // Return all todos
-app.get('/todos', authenticate, (req, res) => {
-    Todo
-        .find({
-            _creator: req.user._id
-        })
-        .then((todos) => {
-            // We wrap todos in an object
-            // in order to we can add another properties we need later on
-            res
-                .send({todos});
-        }, (err) => {
-            res
-                .send(err);
-        });
+app.get('/todos', authenticate, async (req, res) => {
+    try {
+        let todos = await Todo.find({_creator: req.user._id});
+        res.send({todos});
+        return;
+    } catch(e) {
+        res.send(e);
+        return;
+    }
 });
 
 // GET /todos/:id
 // Return a todo object
-app.get('/todos/:id', authenticate, (req, res) => {
+app.get('/todos/:id', authenticate, async (req, res) => {
     var id = req.params.id;
     console.log('Todo ID: ', id);
     if (!ObjectID.isValid(id)) {
         console.log('ID is invalid. ', id);
-        res
-            .status(404)
-            .send();
+        res.status(404).send();
         return;
     }
-    Todo
-        .findOne({
-            _id: id,
-            _creator: req.user._id
-        })
-        .then((todo) => {
-            // If todo with id params not found in database
-            // Server will send empty body with status code 404
-            if (!todo) {
-                console.log('Todo not found')
-                res
-                    .status(404)
-                    .send();
-                return;
-            }
-            // Return todo with id params
-            res
-                .status(200)
-                .send({todo});
-        }, (err) => {
-            // Error occured in the server
-            console.log('Error occured when query todo by id. ', err);
-            res
-
-                .send(err);
-        });
+    try {
+        let todo = await Todo.findOne({_id: id, _creator: req.user._id});
+        // If todo with id params not found in database
+        // Server will send empty body with status code 404
+        if (!todo) {
+            console.log('Todo not found')
+            res.status(404).send();
+            return;
+        }
+        // Return todo with id params
+        res.status(200).send({todo});
+        return;
+    } catch(e) {
+        // Error occured in the server
+        console.log('Error occured when query todo by id. ', err);
+        res.send(err);
+        return;
+    }
 });
 
 // DELETE /users/:id
 // Delete a todo
-app.delete('/todos/:id', authenticate, (req, res) => {
+app.delete('/todos/:id', authenticate, async (req, res) => {
     var todoId = req.params.id;
     var user = req.user;
 
@@ -108,9 +90,7 @@ app.delete('/todos/:id', authenticate, (req, res) => {
     // Send empty body and set the status code 404
     if (!ObjectID.isValid(todoId)) {
         console.log('Invalid object ID.');
-        res
-            .status(404)
-            .send();
+        res.status(404).send();
         return;
     }
     
@@ -118,36 +98,25 @@ app.delete('/todos/:id', authenticate, (req, res) => {
     // If success, return the remove object
     // If there's no data return empty body and status code 404
     // If error occured, return empty body and status code 400
-    Todo
-        .findOneAndRemove({
-            _id: todoId,
-            _creator: user._id
-        })
-        .then((rmvTodo) => {
-            if (rmvTodo == null) {
-                console.log(`Theres no todo data with the ID ${todoId}`);
-                res
-                    .status(404)
-                    .send();
-                return;
-            }
-            console.log(`Todo with ID ${todoId} successfully deleted`);
-            res
-                .status(200)
-                .send({todo: rmvTodo});
+    try {
+        let rmvTodo = await Todo.findOneAndRemove({_id: todoId, _creator: user._id});
+        if (rmvTodo == null) {
+            console.log(`Theres no todo data with the ID ${todoId}`);
+            res.status(404).send();
             return;
-        })
-        .catch((e) => {
-            console.log(`Error occured when deleted Todo with ID ${todoId}`);
-            res
-                .status(400)
-                .send();
-        });
+        }
+        console.log(`Todo with ID ${todoId} successfully deleted`);
+        res.status(200).send({todo: rmvTodo});
+        return;
+    } catch(e) {
+        console.log(`Error occured when deleted Todo with ID ${todoId}`);
+        res.status(400).send();
+    }
 });
 
 // PATCH /todos/:id
 // Update a todo
-app.patch('/todos/:id', authenticate, (req, res) => {
+app.patch('/todos/:id', authenticate, async (req, res) => {
     var id = req.params.id;
     var user = req.user;
 
@@ -158,9 +127,7 @@ app.patch('/todos/:id', authenticate, (req, res) => {
     // Send empty body and set the status code 404
     if (!ObjectID.isValid(id)) {
         console.log('Invalid object ID.');
-        res
-            .status(404)
-            .send();
+        res.status(404).send();
         return;
     }
 
@@ -178,103 +145,63 @@ app.patch('/todos/:id', authenticate, (req, res) => {
     // Update todo data
     // If succes will be returned updated data
     // else return empty data
-    Todo
-        .findOneAndUpdate({
-            _id: id,
-            _creator: user._id
-        }, {
-            $set: body
-        }, {
-            new: true
-        })
-        .then((todo) => {
-            if (!todo) {
-                res
-                    .status(404)
-                    .send();
-                return;
-            }
-            res
-                .status(200)
-                .send({todo});
+    try {
+        let todo = await Todo.findOneAndUpdate({_id: id, _creator: user._id}, { $set: body}, {new: true});
+        if (!todo) {
+            res.status(404).send();
             return;
-        })
-        .catch((err) => {
-            res
-                .status(400)
-                .send();
-            return;
-        });
+        }
+        res.status(200).send({todo});
+        return;
+    } catch(e) {
+        res.status(400).send();
+        return;
+    }
 });
 
 // POST /users
 // Create a user
 // When success server will return the object user: id, and email
 // And also set the header token that has been generated by the server
-app.post('/users', (req, res) => {
-  var body = _.pick(req.body, ['email', 'password']);
-  var user = new User(body);
-
-  user
-    .save()
-    .then(() => {
-        return user.generateAuthToken();
-    })
-    .then((token) => {
-        res
-            .header('x-auth', token)
-            .send(user);
-    })
-    .catch((e) => {
-        res
-            .status(400)
-            .send(e);
-        return;
-    });
+app.post('/users', async (req, res) => {
+    try {
+        var body = _.pick(req.body, ['email', 'password']);
+        var user = new User(body);
+        await user.save();
+        let token = user.generateAuthToken();
+        res.header('x-auth', token).send(user);
+    } catch(e) {
+        res.status(400).send(e);
+    }
 });
 
 // GET /users/me
 app.get('/users/me', authenticate, (req, res) => {
     var user = req.user;
-    res
-        .send({user});
+    res.send({user});
 });
 
 // POST /users/login
-app.post('/users/login', (req, res) => {
-    var usr = _.pick(req.body, ['email', 'password']);
-    User
-        .findByCredentials(usr.email, usr.password)
-        .then((user) => {
-            user
-                .generateAuthToken()
-                .then((token) => {
-                    res
-                        .set('x-auth', token)
-                        .send();
-                });
-        }).catch((err) => {
-            res
-                .status(400)
-                .send(err);
-        });
+app.post('/users/login', async (req, res) => {
+    try {
+        let usr = _.pick(req.body, ['email', 'password']);
+        let user = await User.findByCredentials(usr.email, usr.password);
+        let token = await  user.generateAuthToken();
+        res.set('x-auth', token).send();
+    } catch(e) {
+        res.status(400).send(e);
+    }
 });
 
 // DELETE /users/me/token
 // Logout functionality
-app.delete('/users/me/token', authenticate, (req, res) => {
-    req
-        .user
-        .removeToken(req.token)
-        .then(() => {
-            res
-                .status(200)
-                .send();
-        }, () => {
-            res
-                .status(400)
-                .send();
-        });
+app.delete('/users/me/token', authenticate, async (req, res) => {
+    try {
+        await req.user.removeToken(req.token)
+        res.status(200).send();
+    } catch(e) {
+         res.status(400).send();
+    }
 });
 
 // Fire up the server on port 3000
